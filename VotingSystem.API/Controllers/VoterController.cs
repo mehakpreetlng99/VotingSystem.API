@@ -36,9 +36,12 @@ namespace VotingSystem.API.Controllers
         public async Task<IActionResult> RegisterVoter([FromBody] Voter voter)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var result = await _voterService.RegisterVoterAsync(voter);
-            if (!result) return BadRequest("Voter Registration Failed.'Duplicate Card Number?");
-            return Ok("Voter Registered successfully");
+            bool result = await _voterService.RegisterVoterAsync(voter);
+            if (result) 
+                return Ok("Voter Registered successfully");
+            else
+              return BadRequest("Voter Registration Failed.'Duplicate Card Number?");
+            
         }
 
         //POST :api/voters/castvote
