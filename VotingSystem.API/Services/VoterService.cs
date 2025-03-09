@@ -58,7 +58,7 @@ namespace VotingSystem.API.Services
                 return false; // Prevent multiple voting
             }
 
-            var vote = new VoteController { VoterId = voterId, CandidateId = candidateId, VoteTime = DateTime.UtcNow };
+            var vote = new Vote { VoterId = voterId, CandidateId = candidateId, VoteTime = DateTime.UtcNow };
             await _context.Votes.AddAsync(vote);
             await _context.SaveChangesAsync();
             return true;

@@ -1,6 +1,6 @@
 ﻿namespace VotingSystem.API.Controllers
 {
-    public class Vote
+    public class VoteController
     {
     }
 }
