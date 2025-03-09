@@ -9,13 +9,13 @@ namespace VotingSystem.API.Models
         public int NationalResultId { get; set; }
 
         [ForeignKey("Party")]
-        public int WinningPartyId { get; set; }
+        public int PartyId { get; set; }
 
         [Required]
         public int TotalVotes { get; set; }
 
 
         //Navigation Property
-        public Party? WinningParty { get; set; }
+        public Party? Party { get; set; }
     }
 }

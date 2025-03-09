@@ -1,3 +1,6 @@
+
+using VotingSystem.API.Data;
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +9,10 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+//configuring database
+builder.Services.AddDbContext<VotingDbContext>(options => options.UseSqlServer(builder.Configuration.
+    GetConnectionString("VotingDb")));
 
 var app = builder.Build();
 
