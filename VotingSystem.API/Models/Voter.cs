@@ -10,12 +10,13 @@ namespace VotingSystem.API.Models
         [Required, StringLength(100)]
         public string VoterName { get; set; } = string.Empty;
 
-        [Required, StringLength(100)]
-        public string Email { get; set; } = string.Empty;
-
         [Required]
-        public string PasswordHash { get; set; } = string.Empty;
+        public int StateId { get; set; }
 
-        public bool HasVoted { get; set; } = false;
+        public int? CandidateId { get; set; }
+
+        //Navigation Properties
+        public State? State { get; set; }
+        public Candidate? Candidate { get; set; }
     }
 }
