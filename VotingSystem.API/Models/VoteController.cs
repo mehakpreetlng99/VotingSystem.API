@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace VotingSystem.API.Models
 {
-    public class Vote
+    public class VoteController
     {
 
         [Key]

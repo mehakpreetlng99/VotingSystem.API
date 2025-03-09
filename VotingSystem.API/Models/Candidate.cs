@@ -22,6 +22,6 @@ namespace VotingSystem.API.Models
         //Navigation Properties
         public Party? Party { get; set; }
         public State? State { get; set; }
-        public ICollection<Vote> Votes { get; set; } = new List<Vote>();
+        public ICollection<VoteController> Votes { get; set; } = new List<VoteController>();
     }
 }

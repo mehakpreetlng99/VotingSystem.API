@@ -14,7 +14,7 @@ namespace VotingSystem.API.Data
         public DbSet<Candidate> Candidates { get; set; }
         public DbSet<Party> Parties { get; set; }
         public DbSet<State> States { get; set; }
-        public DbSet<Vote> Votes { get; set; }
+        public DbSet<VoteController> Votes { get; set; }
         public DbSet<StateResult> StateResults { get; set; }
         public DbSet<NationalResult> NationalResults { get; set; }
 
@@ -35,11 +35,11 @@ namespace VotingSystem.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             //vote-voter
-            modelBuilder.Entity<Vote>().HasOne(v => v.Voter).WithOne().HasForeignKey<Vote>(v => v.VoterId)
+            modelBuilder.Entity<VoteController>().HasOne(v => v.Voter).WithOne().HasForeignKey<VoteController>(v => v.VoterId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             //vote-candidate
-            modelBuilder.Entity<Vote>().HasOne(v => v.Candidate).WithMany(c => c.Votes).HasForeignKey(v => v.CandidateId)
+            modelBuilder.Entity<VoteController>().HasOne(v => v.Candidate).WithMany(c => c.Votes).HasForeignKey(v => v.CandidateId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             //Stateresult-state
