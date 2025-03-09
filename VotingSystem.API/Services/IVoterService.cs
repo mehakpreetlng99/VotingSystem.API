@@ -8,5 +8,6 @@ namespace VotingSystem.API.Services
         Task<Voter?> GetVoterByIdAsync(Guid voterId);
         Task<bool> RegisterVoterAsync(Voter voter);
         Task<bool> CastVoteAsync(Guid voterId, int candidateId);
+        Task<Voter?> GetVoterByCardNumberAsync(string voterCardNumber);
     }
 }

@@ -1,69 +1,81 @@
-﻿//using System;
-//using System.IdentityModel.Tokens.Jwt;
-//using System.Security.Claims;
-//using System.Text;
-//using System.Threading.Tasks;
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.Extensions.Configuration;
-//using Microsoft.IdentityModel.Tokens;
-//using VotingSystem.API.Data;
-//using VotingSystem.API.DTO
-//using VotingSystem.API.Models;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using VotingSystem.API.DTO;
+using VotingSystem.API.Models;
+using VotingSystem.API.Data;
+using VotingSystem.API.Services;
+using Microsoft.EntityFrameworkCore;
 
-//namespace VotingSystem.API.Services
-//{
-//    public class AuthService : IAuthService
-//    {
-//        private readonly VotingDbContext _context;
-//        private readonly IConfiguration _configuration;
+public class AuthService : IAuthService
+{
+    private readonly VotingDbContext _context;
+    private readonly IConfiguration _config;
 
-//        public AuthService(VotingDbContext context, IConfiguration configuration)
-//        {
-//            _context = context;
-//            _configuration = configuration;
-//        }
+    public AuthService(VotingDbContext context, IConfiguration config)
+    {
+        _context = context;
+        _config = config;
+    }
 
-//        public async Task<string?> AuthenticateAdminAsync(AdminLoginDto adminLoginDto)
-//        {
-//            var admin = await _context.Admin
-//                .FirstOrDefaultAsync(a => a.Username == adminLoginDto.Username && a.Password == adminLoginDto.Password);
+    public async Task<string?> AdminLoginAsync(string username, string password)
+    {
+        var admin = _context.Admins.FirstOrDefault(a => a.Username == username && a.Password == password);
+        if (admin == null) return null;
 
-//            if (admin == null)
-//                return null;
+        return GenerateJwtToken(username, "Admin");
+    }
 
-//            return GenerateJwtToken(admin.Username, "Admin");
-//        }
+   
+    public async Task<Voter?> VoterLoginAsync(string voterCardNumber)
+    {
+        return _context.Voters.FirstOrDefault(v => v.VoterCardNumber == voterCardNumber);
+    }
 
-//        public async Task<string?> AuthenticateVoterAsync(VoterLoginDto voterLoginDto)
-//        {
-//            var voter = await _context.Voters
-//                .FirstOrDefaultAsync(v => v.VoterCardNumber == voterLoginDto.VoterCardNumber);
+    public async Task<bool> RegisterAdminAsync(string username, string password)
+    {
+        if (await _context.Admins.AnyAsync(a => a.Username == username))
+            return false;
 
-//            if (voter == null)
-//                return null;
+        var admin = new Admin
+        {
+            Username = username,
+            Password = BCrypt.Net.BCrypt.HashPassword(password)
+        };
 
-//            return GenerateJwtToken(voter.VoterCardNumber, "Voter");
-//        }
+        _context.Admins.Add(admin);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+    /// <summary>
+    /// Generate JWT Token
+    /// </summary>
+    private string GenerateJwtToken(string identifier, string role)
+    {
+        var secretKey = _config["JWT_SECRET"];
+        var issuer = _config["JWT_ISSUER"];
+        var audience = _config["JWT_AUDIENCE"];
 
-//        private string GenerateJwtToken(string identifier, string role)
-//        {
-//            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-//            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-//            var claims = new[]
-//            {
-//                new Claim(ClaimTypes.Name, identifier),
-//                new Claim(ClaimTypes.Role, role)
-//            };
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, identifier),
+            new Claim(ClaimTypes.Role, role),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
 
-//            var token = new JwtSecurityToken(
-//                _configuration["Jwt:Issuer"],
-//                _configuration["Jwt:Audience"],
-//                claims,
-//                expires: DateTime.UtcNow.AddHours(2),
-//                signingCredentials: credentials);
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: creds
+        );
 
-//            return new JwtSecurityTokenHandler().WriteToken(token);
-//        }
-//    }
-//}
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}

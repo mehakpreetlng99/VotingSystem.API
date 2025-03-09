@@ -1,11 +1,13 @@
 ﻿using System.Threading.Tasks;
-using VotingSystem.API.DTO;
+using VotingSystem.API.Models;
 
 namespace VotingSystem.API.Services
 {
     public interface IAuthService
     {
-        Task<string?> AuthenticateAdminAsync(AdminLoginDto adminLoginDto);
-        Task<string?> AuthenticateVoterAsync(VoterLoginDto voterLoginDto);
+        Task<string?> AdminLoginAsync(string username, string password);
+        Task<Voter?> VoterLoginAsync(string voterCardNumber);
+
+        Task<bool> RegisterAdminAsync(string username, string password);
     }
 }

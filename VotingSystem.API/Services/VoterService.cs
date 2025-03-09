@@ -46,6 +46,10 @@ namespace VotingSystem.API.Services
             return true;
         }
 
+        public async Task<Voter?> GetVoterByCardNumberAsync(string voterCardNumber)
+        {
+            return await _context.Voters.FirstOrDefaultAsync(v => v.VoterCardNumber == voterCardNumber);
+        }
         //  Cast Vote
         public async Task<bool> CastVoteAsync(Guid voterId, int candidateId)
         {

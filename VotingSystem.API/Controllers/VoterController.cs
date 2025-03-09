@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VotingSystem.API.Services;
 using VotingSystem.API.Models ;
+using Microsoft.AspNetCore.Authorization;
 namespace VotingSystem.API.Controllers
 {
     [ApiController]
     [Route("api/voters")]
+    [Authorize(Policy = "VoterPolicy")]
     public class VoterController:ControllerBase
     {
         private readonly IVoterService _voterService;
@@ -12,6 +14,13 @@ namespace VotingSystem.API.Controllers
         {
             _voterService = voterService;
         }
+
+        [HttpGet("profile")]
+        public IActionResult GetVoterProfile()
+        {
+            return Ok("Welcome Voter! This is your profile.");
+        }
+
 
         // GET: api/voters
 

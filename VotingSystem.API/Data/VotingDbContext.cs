@@ -17,6 +17,7 @@ namespace VotingSystem.API.Data
         public DbSet<Vote> Votes { get; set; }
         public DbSet<StateResult> StateResults { get; set; }
         public DbSet<NationalResult> NationalResults { get; set; }
+        public DbSet<Admin> Admins { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +26,7 @@ namespace VotingSystem.API.Data
             //unique constarints
             modelBuilder.Entity<Voter>().HasIndex(v => v.VoterId).IsUnique();
             modelBuilder.Entity<Party>().HasIndex(p => p.PartySymbol).IsUnique();
+            modelBuilder.Entity<Admin>().HasIndex(a => a.Username).IsUnique();
 
             // candidate-state
             modelBuilder.Entity<Candidate>().HasOne(c => c.State).WithMany(s => s.Candidates).HasForeignKey(c => c.StateId)
@@ -49,6 +51,7 @@ namespace VotingSystem.API.Data
             //NationalREsult-Party
             modelBuilder.Entity<NationalResult>().HasOne(nr => nr.Party).WithMany().HasForeignKey(nr => nr.PartyId)
                 .OnDelete(DeleteBehavior.Restrict);
+
 
         }
     }
