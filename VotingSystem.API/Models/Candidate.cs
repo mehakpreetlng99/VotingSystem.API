@@ -17,6 +17,7 @@ namespace VotingSystem.API.Models
         public int PartyId { get; set; }
 
         public int StateId { get; set; }
+        public bool IsActive { get; set; } = true;
 
         //Navigation Properties
         public Party? Party { get; set; }
