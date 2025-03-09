@@ -27,7 +27,7 @@ namespace VotingSystem.API.Data
             modelBuilder.Entity<Party>().HasIndex(p => p.PartySymbol).IsUnique();
 
             // candidate-state
-            modelBuilder.Entity<Candidate>().HasOne(c => c.State).WithMany(s => s.Candidates).HasForeignKey(c => c.PartyId)
+            modelBuilder.Entity<Candidate>().HasOne(c => c.State).WithMany(s => s.Candidates).HasForeignKey(c => c.StateId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             //candidate-party
