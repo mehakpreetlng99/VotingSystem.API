@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VotingSystem.API.Data;
 
@@ -11,9 +12,11 @@ using VotingSystem.API.Data;
 namespace VotingSystem.API.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    partial class VotingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250309101516_Updated voter again")]
+    partial class Updatedvoteragain
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,9 +161,6 @@ namespace VotingSystem.API.Migrations
                     b.Property<int>("StateId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("VoteTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<Guid>("VoterId")
                         .HasColumnType("uniqueidentifier");
 
@@ -187,10 +187,6 @@ namespace VotingSystem.API.Migrations
 
                     b.Property<int>("StateId")
                         .HasColumnType("int");
-
-                    b.Property<string>("VoterCardNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("VoterName")
                         .IsRequired()

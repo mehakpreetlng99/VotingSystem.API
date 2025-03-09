@@ -18,6 +18,7 @@ namespace VotingSystem.API.Models
 
         [Required]
         public int StateId { get; set; }
+        public DateTime VoteTime { get; set; }
 
         //Navigation properties
         public Candidate? Candidate { get; set; }

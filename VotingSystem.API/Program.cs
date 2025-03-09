@@ -1,6 +1,7 @@
 
 using VotingSystem.API.Data;
 using Microsoft.EntityFrameworkCore;
+using VotingSystem.API.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,6 +14,10 @@ builder.Services.AddSwaggerGen();
 //configuring database
 builder.Services.AddDbContext<VotingDbContext>(options => options.UseSqlServer(builder.Configuration.
     GetConnectionString("VotingDb")));
+
+//register services
+builder.Services.AddScoped<IVoterService, VoterService>();
+builder.Services.AddLogging();
 
 var app = builder.Build();
 

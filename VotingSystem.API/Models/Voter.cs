@@ -15,6 +15,8 @@ namespace VotingSystem.API.Models
 
         public int? CandidateId { get; set; }
 
+        public string VoterCardNumber { get; set; } = string.Empty;
+
         //Navigation Properties
         public State? State { get; set; }
         public Candidate? Candidate { get; set; }
