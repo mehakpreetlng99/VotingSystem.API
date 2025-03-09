@@ -1,12 +1,11 @@
 ﻿using System.Threading.Tasks;
-using VotingSystem.API.DTOs;
+using VotingSystem.API.DTO;
 
 namespace VotingSystem.API.Services
 {
     public interface IAuthService
     {
-        Task<string?> AdminLoginAsync(AdminLoginDto loginDto);
-        Task<string?> VoterLoginAsync(VoterLoginDto loginDto);
+        Task<string?> AuthenticateAdminAsync(AdminLoginDto adminLoginDto);
+        Task<string?> AuthenticateVoterAsync(VoterLoginDto voterLoginDto);
     }
 }
-
