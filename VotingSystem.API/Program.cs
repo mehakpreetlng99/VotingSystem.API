@@ -47,6 +47,7 @@ builder.Services.AddDbContext<VotingDbContext>(options =>
 // Register services
 builder.Services.AddScoped<IVoterService, VoterService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 
 // Load JWT settings from configuration.

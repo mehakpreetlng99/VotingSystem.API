@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -23,6 +24,7 @@ public class AuthController : ControllerBase
     }
 
     // 🔹 Admin Login
+    
     [HttpPost("admin/login")]
     public async Task<IActionResult> AdminLogin([FromBody] AdminLoginDto adminLoginDto)
     {
