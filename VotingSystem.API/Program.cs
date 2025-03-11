@@ -52,6 +52,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IPartyService, PartyService>();
 builder.Services.AddScoped<IStateService, StateService>();
+builder.Services.AddScoped<IVoteService, VoteService>();
+
 
 
 

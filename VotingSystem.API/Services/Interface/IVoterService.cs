@@ -18,7 +18,7 @@ public interface IVoterService
 {
     Task<VoterResponseDTO> RegisterVoterAsync(VoterRequestDTO voterDto);
     Task<IEnumerable<VoterResponseDTO>> GetAllVotersAsync(); 
-    Task<VoterResponseDTO> GetVoterByIdAsync(Guid voterId); 
-    Task<VoterResponseDTO> UpdateVoterAsync(int voterId, VoterRequestDTO voterDto); 
+    Task<VoterResponseDTO> GetVoterByCardNumberAsync(string voterCardNumber); 
+    Task<VoterResponseDTO> UpdateVoterAsync(string voterCardNumber, VoterRequestDTO voterDto); 
     Task<IEnumerable<VoterResponseDTO>> GetVotersByStateIdAsync(int stateId); 
 }

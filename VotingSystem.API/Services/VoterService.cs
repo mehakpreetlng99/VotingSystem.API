@@ -15,17 +15,15 @@ public class VoterService : IVoterService
     {
         _context = context;
     }
-
-    // ✅ Register a Voter (Generate 6-digit Voter Card Number)
+                                                                                                                                                                                                                                                                                        
     public async Task<VoterResponseDTO> RegisterVoterAsync(VoterRequestDTO voterRequest)
     {
-        // ✅ Check if the voter is under 18
+ 
         if (voterRequest.Age < 18)
         {
             throw new ArgumentException("Voter must be at least 18 years old.");
         }
 
-        // ✅ Check if the voter already exists by name (or another unique field)
         string uniqueVoterCardNumber =  GenerateRandomVoterCard();
 
         var existingVoter = await _context.Voters.FirstOrDefaultAsync(v => v.VoterCardNumber == uniqueVoterCardNumber);
@@ -33,10 +31,8 @@ public class VoterService : IVoterService
         {
             throw new ArgumentException("A voter with the same Voter Card Number already exists.");
         }
-        // ✅ Generate a random voter card number (6 digits)
         string voterCardNumber = GenerateRandomVoterCard();
 
-        // ✅ Create a new Voter entity
         var voter = new Voter
         {
             VoterName = voterRequest.VoterName,
@@ -45,11 +41,9 @@ public class VoterService : IVoterService
             VoterCardNumber = voterCardNumber
         };
 
-        // ✅ Save to database
         _context.Voters.Add(voter);
         await _context.SaveChangesAsync();
 
-        // ✅ Return response DTO
         return new VoterResponseDTO
         {
             VoterId = voter.VoterId,
@@ -58,8 +52,6 @@ public class VoterService : IVoterService
         };
     }
 
-
-    // ✅ Get All Voters (Admin Only)
     public async Task<IEnumerable<VoterResponseDTO>> GetAllVotersAsync()
     {
         var voters = await _context.Voters.ToListAsync();
@@ -67,31 +59,87 @@ public class VoterService : IVoterService
         {
             VoterId = v.VoterId,
             VoterName = v.VoterName,
-            VoterCardNumber = v.VoterCardNumber
+            VoterCardNumber = v.VoterCardNumber,
+            Age=v.Age,
+            StateId=v.StateId
         });
     }
 
     // ✅ Get Voter by ID (Admin Only)
-    public async Task<VoterResponseDTO> GetVoterByIdAsync(Guid voterId)
+    //public async Task<VoterResponseDTO> GetVoterByCardNumberAsync(string voterCardNumber)
+    //{
+    //    var voter = await _context.Voters.FirstOrDefaultAsync(v => v.VoterCardNumber == voterCardNumber);
+
+    //    if (voter == null)
+    //    {
+    //        throw new ArgumentException("Voter not found.");
+    //    }
+
+    //    return _mapper.Map<VoterResponseDTO>(voter);
+    //}
+    public async Task<VoterResponseDTO> GetVoterByCardNumberAsync(string voterCardNumber)
     {
-        var voter = await _context.Voters.FindAsync(voterId);
-        //var voter = await _context.Voters.FirstOrDefaultAsync(v => v.VoterId == voterId);
+        var voter = await _context.Voters.FirstOrDefaultAsync(v => v.VoterCardNumber == voterCardNumber);
 
         if (voter == null)
-            return null;
+        {
+            throw new ArgumentException("Voter not found.");
+        }
 
-        return new VoterResponseDTO
+        // Manually map Voter to VoterResponseDTO
+        var voterDTO = new VoterResponseDTO
         {
             VoterId = voter.VoterId,
             VoterName = voter.VoterName,
+            Age = voter.Age,
+            StateId = voter.StateId,
             VoterCardNumber = voter.VoterCardNumber
         };
+
+        return voterDTO;
     }
 
+    //public async Task<VoterResponseDTO> GetVoterByIdAsync(Guid voterId)
+    //{
+    //    var voter = await _context.Voters.FindAsync(voterId);
+    //    //var voter = await _context.Voters.FirstOrDefaultAsync(v => v.VoterId == voterId);
+
+    //    if (voter == null)
+    //        return null;
+
+    //    return new VoterResponseDTO
+    //    {
+    //        VoterId = voter.VoterId,
+    //        VoterName = voter.VoterName,
+    //        VoterCardNumber = voter.VoterCardNumber
+    //    };
+    //}
+
     // ✅ Update Voter (Admin Only)
-    public async Task<VoterResponseDTO> UpdateVoterAsync(int voterId, VoterRequestDTO voterDto)
+    //public async Task<VoterResponseDTO> UpdateVoterAsync(string voterCardNumber, VoterRequestDTO voterDto)
+    //{
+    //    var voter = await _context.Voters.FindAsync(voterCardNumber);
+    //    if (voter == null)
+    //        return null;
+
+    //    voter.VoterName = voterDto.VoterName;
+    //    voter.Age = voterDto.Age;
+    //    voter.StateId = voterDto.StateId;
+
+    //    await _context.SaveChangesAsync();
+
+    //    return new VoterResponseDTO
+    //    {
+    //        VoterId = voter.VoterId,
+    //        VoterName = voter.VoterName,
+    //        VoterCardNumber = voter.VoterCardNumber,
+    //        Age = voter.Age,
+    //        StateId=voter.StateId
+    //    };
+    //}
+    public async Task<VoterResponseDTO> UpdateVoterAsync(string voterCardNumber, VoterRequestDTO voterDto)
     {
-        var voter = await _context.Voters.FindAsync(voterId);
+        var voter = await _context.Voters.FirstOrDefaultAsync(v => v.VoterCardNumber == voterCardNumber);
         if (voter == null)
             return null;
 
@@ -103,13 +151,14 @@ public class VoterService : IVoterService
 
         return new VoterResponseDTO
         {
-            VoterId = voter.VoterId,
+            VoterId=voter.VoterId,
             VoterName = voter.VoterName,
-            VoterCardNumber = voter.VoterCardNumber
+            VoterCardNumber = voter.VoterCardNumber,
+            Age = voter.Age,
+            StateId = voter.StateId
         };
     }
 
-    // ✅ Get Voters by State ID (Admin Only)
     public async Task<IEnumerable<VoterResponseDTO>> GetVotersByStateIdAsync(int stateId)
     {
         var voters = await _context.Voters.Where(v => v.StateId == stateId).ToListAsync();
@@ -117,11 +166,12 @@ public class VoterService : IVoterService
         {
             VoterId = v.VoterId,
             VoterName = v.VoterName,
-            VoterCardNumber = v.VoterCardNumber
+            VoterCardNumber = v.VoterCardNumber,
+            Age=v.Age,
+            StateId=v.StateId
         });
     }
 
-    // 🔹 Helper Method: Generate Random 6-digit Voter Card Number
     private string GenerateRandomVoterCard()
     {
         Random random = new Random();

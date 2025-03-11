@@ -48,27 +48,57 @@ public class VoterController : ControllerBase
 
     // ✅ Get Voter by ID (Admin Only)
     [Authorize(Roles = "Admin")]
-    [HttpGet("{voterId}")]
-    public async Task<IActionResult> GetVoterById(Guid voterId)
+    [HttpGet("{voterCardNumber}")]
+    public async Task<IActionResult> GetVoterByCardNumber(string voterCardNumber)
     {
-        var voter = await _voterService.GetVoterByIdAsync(voterId);
-        if (voter == null)
-            return NotFound("Voter not found.");
-
-        return Ok(voter);
+        try
+        {
+            var voter = await _voterService.GetVoterByCardNumberAsync(voterCardNumber);
+            return Ok(voter);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while processing the request.", details = ex.Message });
+        }
     }
 
+    //[Authorize(Roles = "Admin")]
+    //[HttpGet("{voterId}")]
+    //public async Task<IActionResult> GetVoterById(Guid voterId)
+    //{
+    //    var voter = await _voterService.GetVoterByIdAsync(voterId);
+    //    if (voter == null)
+    //        return NotFound("Voter not found.");
+
+    //    return Ok(voter);
+    //}
+
     // ✅ Update Voter (Admin Only)
+    //[Authorize(Roles = "Admin")]
+    //[HttpPut("{voterId}")]
+    //public async Task<IActionResult> UpdateVoter(string voterCardNumber, [FromBody] VoterRequestDTO voterDto)
+    //{
+    //    var updatedVoter = await _voterService.UpdateVoterAsync(voterCardNumber, voterDto);
+    //    if (updatedVoter == null)
+    //        return NotFound("Voter not found.");
+
+    //    return Ok(updatedVoter);
+    //}
     [Authorize(Roles = "Admin")]
-    [HttpPut("{voterId}")]
-    public async Task<IActionResult> UpdateVoter(int voterId, [FromBody] VoterRequestDTO voterDto)
+    [HttpPut("{voterCardNumber}")]
+    public async Task<IActionResult> UpdateVoter(string voterCardNumber, [FromBody] VoterRequestDTO voterDto)
     {
-        var updatedVoter = await _voterService.UpdateVoterAsync(voterId, voterDto);
+        var updatedVoter = await _voterService.UpdateVoterAsync(voterCardNumber, voterDto);
         if (updatedVoter == null)
             return NotFound("Voter not found.");
 
         return Ok(updatedVoter);
     }
+
 
     // ✅ Get Voters by State ID (Admin Only)
     [Authorize(Roles = "Admin")]

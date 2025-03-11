@@ -14,7 +14,6 @@ namespace VotingSystem.API.Models
         [Required]
         public int TotalVotes { get; set; }
 
-
         //Navigation Property
         public Party? Party { get; set; }
     }
