@@ -1,65 +1,81 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using VotingSystem.API.DTO.Voter;
 using VotingSystem.API.Services;
-using VotingSystem.API.Models ;
-using Microsoft.AspNetCore.Authorization;
-namespace VotingSystem.API.Controllers
+
+[Route("api/voter")]
+[ApiController]
+public class VoterController : ControllerBase
 {
-    [ApiController]
-    [Route("api/voters")]
-    [Authorize(Policy = "VoterPolicy")]
-    public class VoterController:ControllerBase
+    private readonly IVoterService _voterService;
+
+    public VoterController(IVoterService voterService)
     {
-        private readonly IVoterService _voterService;
-        public VoterController(IVoterService voterService)
+        _voterService = voterService;
+    }
+
+    // ✅ Register Voter (Public)
+
+    [HttpPost("register")]
+    public async Task<IActionResult> RegisterVoter([FromBody] VoterRequestDTO voterDto)
+    {
+        try
         {
-            _voterService = voterService;
+            var result = await _voterService.RegisterVoterAsync(voterDto);
+            return Ok(result);
         }
-
-        [HttpGet("profile")]
-        public IActionResult GetVoterProfile()
+        catch (ArgumentException ex)
         {
-            return Ok("Welcome Voter! This is your profile.");
+            return BadRequest(new { message = ex.Message }); // ✅ Returns only the short error message
         }
-
-
-        // GET: api/voters
-
-        [HttpGet]
-        public async Task <IActionResult> GetAllVoters()
+        catch (Exception)
         {
-            var voters = await _voterService.AllVotersAsync();
-            return Ok(voters);
+            return StatusCode(500, new { message = "An unexpected error occurred. Please try again later." });
         }
+    }
 
-        //GEt: api/voters/{id}
-        [HttpGet("{id}")]
-        public async Task <IActionResult> GetVoterById(Guid id)
-        {
-            var voter = await _voterService.GetVoterByIdAsync(id);
-            if (voter == null) return NotFound("Voter not Found");
-            return Ok(voter);
-        }
 
-        //POST: api/voters/register
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterVoter([FromBody] Voter voter)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            bool result = await _voterService.RegisterVoterAsync(voter);
-            if (result) 
-                return Ok("Voter Registered successfully");
-            else
-              return BadRequest("Voter Registration Failed.'Duplicate Card Number?");
-            
-        }
+    // ✅ Get All Voters (Admin Only)
+    [Authorize(Roles = "Admin")]
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllVoters()
+    {
+        var voters = await _voterService.GetAllVotersAsync();
+        return Ok(voters);
+    }
 
-        //POST :api/voters/castvote
-        [HttpPost("castvote")]
-        public async Task<IActionResult> CastVote([FromQuery] Guid voterId, [FromQuery] int candidateId)
-        {
-            var result = await _voterService.CastVoteAsync(voterId, candidateId);
-            if (!result) return BadRequest("Failed to cast vote. Voter might have already voted.");
-            return Ok("Vote cast successfully");
-        }
+    // ✅ Get Voter by ID (Admin Only)
+    [Authorize(Roles = "Admin")]
+    [HttpGet("{voterId}")]
+    public async Task<IActionResult> GetVoterById(Guid voterId)
+    {
+        var voter = await _voterService.GetVoterByIdAsync(voterId);
+        if (voter == null)
+            return NotFound("Voter not found.");
+
+        return Ok(voter);
+    }
+
+    // ✅ Update Voter (Admin Only)
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{voterId}")]
+    public async Task<IActionResult> UpdateVoter(int voterId, [FromBody] VoterRequestDTO voterDto)
+    {
+        var updatedVoter = await _voterService.UpdateVoterAsync(voterId, voterDto);
+        if (updatedVoter == null)
+            return NotFound("Voter not found.");
+
+        return Ok(updatedVoter);
+    }
+
+    // ✅ Get Voters by State ID (Admin Only)
+    [Authorize(Roles = "Admin")]
+    [HttpGet("state/{stateId}")]
+    public async Task<IActionResult> GetVotersByState(int stateId)
+    {
+        var voters = await _voterService.GetVotersByStateIdAsync(stateId);
+        return Ok(voters);
     }
 }

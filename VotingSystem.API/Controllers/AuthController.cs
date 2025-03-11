@@ -39,18 +39,18 @@ public class AuthController : ControllerBase
     }
 
     // 🔹 Voter Login
-    [HttpPost("voter/login")]
-    public async Task<IActionResult> VoterLogin([FromBody] VoterLoginDto voterLoginDto)
-    {
-        var voter = await _voterService.GetVoterByCardNumberAsync(voterLoginDto.VoterCardNumber);
-        if (voter == null)
-        {
-            return Unauthorized("Invalid Voter Card Number");
-        }
+    //[HttpPost("voter/login")]
+    //public async Task<IActionResult> VoterLogin([FromBody] VoterLoginDto voterLoginDto)
+    //{
+    //    var voter = await _voterService.GetVoterByCardNumberAsync(voterLoginDto.VoterCardNumber);
+    //    if (voter == null)
+    //    {
+    //        return Unauthorized("Invalid Voter Card Number");
+    //    }
 
-        var token = GenerateJwtToken(voter.VoterCardNumber, "Voter");
-        return Ok(new { Token = token });
-    }
+    //    var token = GenerateJwtToken(voter.VoterCardNumber, "Voter");
+    //    return Ok(new { Token = token });
+    //}
 
     // 🔹 Admin Registration
     [HttpPost("admin/register")]

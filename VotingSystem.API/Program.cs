@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using VotingSystem.API.Services;
+using VotingSystem.API.Services.Interface;
+
 using System.Text;
 using Microsoft.OpenApi.Models;
 
@@ -47,7 +49,13 @@ builder.Services.AddDbContext<VotingDbContext>(options =>
 // Register services
 builder.Services.AddScoped<IVoterService, VoterService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ICandidateService, CandidateService>();
+builder.Services.AddScoped<IPartyService, PartyService>();
+builder.Services.AddScoped<IStateService, StateService>();
+
+
+
+//builder.Services.AddScoped<IAdminService, AdminService>();
 
 
 // Load JWT settings from configuration.
