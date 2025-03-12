@@ -14,7 +14,7 @@ namespace VotingSystem.API.Models
         
 
         [ForeignKey("Candidate")]
-        public int? CandidateId { get; set; } // Nullable for abstain option
+        public int? CandidateId { get; set; }
 
         [Required]
         public int StateId { get; set; }

@@ -5,11 +5,9 @@ namespace VotingSystem.API.Data
 {
     public class VotingDbContext :DbContext
     {
-        public VotingDbContext(DbContextOptions<VotingDbContext> options) : base(options) 
-        {   
+        public VotingDbContext(DbContextOptions<VotingDbContext> options) : base(options)
+        {
         }
-
-        // DbSets
         public DbSet<Voter> Voters { get; set; }
         public DbSet<Candidate> Candidates { get; set; }
         public DbSet<Party> Parties { get; set; }

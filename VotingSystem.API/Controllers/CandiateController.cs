@@ -25,21 +25,6 @@ namespace VotingSystem.API.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> CreateCandidate([FromBody] CandidateRequestDTO candidateDto)
-        //{
-        //    try
-        //    {
-        //        _logger.LogInformation("Creating a new candidate.");
-        //        var createdCandidate = await _candidateService.CreateCandidateAsync(candidateDto);
-        //        return CreatedAtAction(nameof(GetCandidateById), new { id = createdCandidate.CandidateId }, createdCandidate);
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        _logger.LogError(ex, "Error occurred while creating a candidate.");
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
-
         public async Task<IActionResult> CreateCandidate([FromBody] CandidateRequestDTO candidateDto)
         {
             try
@@ -51,12 +36,12 @@ namespace VotingSystem.API.Controllers
             catch (InvalidOperationException ex)
             {
                 _logger.LogError(ex, "Error occurred while creating a candidate.");
-                return BadRequest(new { message = ex.Message.Split('\n')[0] }); // Extract only the first line
+                return BadRequest(new { message = ex.Message.Split('\n')[0] }); 
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error occurred while creating a candidate.");
-                return StatusCode(500, new { message = ex.Message.Split('\n')[0] }); // Extract only the first line
+                return StatusCode(500, new { message = ex.Message.Split('\n')[0] }); 
             }
         }
 
@@ -86,18 +71,6 @@ namespace VotingSystem.API.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
-        //public async Task<IActionResult> DeleteCandidate(int id)
-        //{
-        //    _logger.LogInformation($"Attempting to delete candidate with ID: {id}");
-        //    var isDeleted = await _candidateService.DeleteCandidateAsync(id);
-        //    if (!isDeleted)
-        //    {
-        //        _logger.LogWarning($"Candidate with ID {id} not found for deletion.");
-        //        return NotFound(new { message = "Candidate not found." });
-        //    }
-        //    _logger.LogInformation($"Candidate with ID {id} deleted successfully.");
-        //    return Ok(new { message = "Candidate removed successfully." });
-        //}
         public async Task<IActionResult> DeleteCandidate(int id)
         {
             _logger.LogInformation($"Attempting to delete candidate with ID: {id}");
@@ -141,91 +114,3 @@ namespace VotingSystem.API.Controllers
     }
 }
 
-//using Microsoft.AspNetCore.Authorization;
-//using Microsoft.AspNetCore.Mvc;
-//using VotingSystem.API.Services;
-//using System.Threading.Tasks;
-//using System.Collections.Generic;
-//using VotingSystem.API.DTO.Candidate;
-//using System;
-
-//namespace VotingSystem.API.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class CandidateController : ControllerBase
-//    {
-//        private readonly ICandidateService _candidateService;
-
-//        public CandidateController(ICandidateService candidateService)
-//        {
-//            _candidateService = candidateService;
-//        }
-
-//        [HttpPost]
-//        [Authorize(Roles = "Admin")]
-//        public async Task<IActionResult> CreateCandidate([FromBody] CandidateRequestDTO candidateDto)
-//        {
-//            try
-//            {
-//                var createdCandidate = await _candidateService.CreateCandidateAsync(candidateDto);
-//                return CreatedAtAction(nameof(GetCandidateById), new { id = createdCandidate.CandidateId }, createdCandidate);
-//            }
-//            catch (InvalidOperationException ex)
-//            {
-//                return BadRequest(new { message = ex.Message });
-//            }
-//        }
-
-//        [HttpPut("{id}")]
-//        [Authorize(Roles = "Admin")]
-//        public async Task<IActionResult> UpdateCandidate(int id, [FromBody] CandidateRequestDTO candidateDto)
-//        {
-//            try
-//            {
-//                var updatedCandidate = await _candidateService.UpdateCandidateAsync(id, candidateDto);
-//                return Ok(updatedCandidate);
-//            }
-//            catch (KeyNotFoundException)
-//            {
-//                return NotFound(new { message = "Candidate not found." });
-//            }
-//            catch (InvalidOperationException ex)
-//            {
-//                return BadRequest(new { message = ex.Message });
-//            }
-//        }
-
-//        [HttpDelete("{id}")]
-//        [Authorize(Roles = "Admin")]
-//        public async Task<IActionResult> DeleteCandidate(int id)
-//        {
-//            var isDeleted = await _candidateService.DeleteCandidateAsync(id);
-//            if (!isDeleted)
-//            {
-//                return NotFound(new { message = "Candidate not found." });
-//            }
-//            return Ok(new { message = "Candidate removed successfully." });
-//        }
-
-//        [HttpGet("allCandidates")]
-//        public async Task<IActionResult> GetAllCandidates()
-//        {
-//            var candidates = await _candidateService.GetAllCandidatesAsync();
-//            return Ok(new { data = candidates });
-//        }
-
-//        [HttpGet("{id}")]
-//        public async Task<IActionResult> GetCandidateById(int id)
-//        {
-//            var candidate = await _candidateService.GetCandidateByIdAsync(id);
-//            if (candidate == null)
-//            {
-//                return NotFound(new { message = "Candidate not found." });
-//            }
-//            return Ok(candidate);
-//        }
-
-
-//    }
-//}

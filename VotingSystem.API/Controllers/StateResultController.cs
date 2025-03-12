@@ -33,7 +33,7 @@ namespace VotingSystem.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        // Get the state result for a specific state
+
         [HttpGet("{stateId}")]
         public async Task<ActionResult<StateResult>> GetStateResult(int stateId)
         {

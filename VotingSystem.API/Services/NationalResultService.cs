@@ -18,7 +18,7 @@ namespace VotingSystem.API.Services
             try
             {
                 _logger.LogInformation("Calculating national result.");
-                // Get all state results and count how many states each party won
+                
                 var stateResults = await _context.StateResults
                     .Include(sr => sr.WinningCandidate)
                     .Include(sr => sr.State)
