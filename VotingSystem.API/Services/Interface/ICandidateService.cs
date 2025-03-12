@@ -9,6 +9,6 @@ namespace VotingSystem.API.Services
         Task<CandidateResponseDTO?> GetCandidateByIdAsync(int id);
         Task<CandidateResponseDTO> CreateCandidateAsync(CandidateRequestDTO candidateDto);
         Task<CandidateResponseDTO?> UpdateCandidateAsync(int id, CandidateRequestDTO requestDto);
-        Task<bool> DeleteCandidateAsync(int id);
+        Task<string> DeleteCandidateAsync(int id);
     }
 }

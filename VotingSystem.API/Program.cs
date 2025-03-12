@@ -57,6 +57,9 @@ builder.Services.AddScoped<IVoteService, VoteService>();
 builder.Services.AddScoped<IStateResultService, StateResultService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSingleton<ILoggerService, LoggerService>();
+builder.Services.AddScoped<INationalResultService, NationalResultService>();
+
+
 
 
 
