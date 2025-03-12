@@ -16,7 +16,7 @@ namespace VotingSystem.API.DTO.Candidate
         [Range(1, int.MaxValue, ErrorMessage = "StateId must be a valid positive integer.")]
         public int StateId { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        //public bool IsActive { get; set; } = true;
     }
 
 }

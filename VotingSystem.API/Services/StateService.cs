@@ -1,51 +1,61 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using VotingSystem.API.Data;
 using VotingSystem.API.DTO.State;
 using VotingSystem.API.Models;
 using VotingSystem.API.Services.Interface;
+
 namespace VotingSystem.API.Services
 {
-    public class StateService:IStateService
+    public class StateService : IStateService
     {
         private readonly VotingDbContext _context;
-        public StateService(VotingDbContext context)
+        private readonly ILogger<StateService> _logger;  // Inject Logger
+
+        public StateService(VotingDbContext context, ILogger<StateService> logger)
         {
             _context = context;
+            _logger = logger;
         }
+
         public async Task<StateResponseDTO> CreateStateAsync(StateRequestDTO stateDto)
         {
             try
             {
-                // Check if state already exists with the same name
+                _logger.LogInformation("Creating state: {StateName}", stateDto.StateName);
+
                 var existingState = await _context.States
                     .FirstOrDefaultAsync(s => s.StateName == stateDto.StateName);
+
                 if (existingState != null)
                 {
-                    throw new Exception("State with this name already exists.");
+                    _logger.LogWarning("State with name {StateName} already exists", stateDto.StateName);
+                    throw new InvalidOperationException("State with this name already exists.");
                 }
-                var state = new State
-                {
-                    StateName = stateDto.StateName
-                };
+
+                var state = new State { StateName = stateDto.StateName };
                 _context.States.Add(state);
                 await _context.SaveChangesAsync();
-                return new StateResponseDTO
-                {
-                    StateId = state.StateId,
-                    StateName = state.StateName
-                };
+
+                _logger.LogInformation("State created successfully with ID {StateId}", state.StateId);
+
+                return new StateResponseDTO { StateId = state.StateId, StateName = state.StateName };
             }
             catch (Exception ex)
             {
-                throw new Exception($"An error occurred while creating the state: {ex.Message}");
+                _logger.LogError(ex, "Error occurred while creating state {StateName}", stateDto.StateName);
+                throw;
             }
         }
+
         public async Task<IEnumerable<StateResponseDTO>> GetAllStatesAsync()
         {
             try
             {
-                var states = await _context.States.ToListAsync();
+                _logger.LogInformation("Fetching all states.");
+                var states = await _context.States.AsNoTracking().ToListAsync();
+
                 return states.Select(s => new StateResponseDTO
                 {
                     StateId = s.StateId,
@@ -54,86 +64,241 @@ namespace VotingSystem.API.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"An error occurred while retrieving the states: {ex.Message}");
+                _logger.LogError(ex, "Error occurred while retrieving states.");
+                throw;
             }
         }
+
         public async Task<StateResponseDTO?> GetStateByIdAsync(int stateId)
         {
             try
             {
+                _logger.LogInformation("Fetching state with ID {StateId}", stateId);
+
                 var state = await _context.States
-                    .FirstOrDefaultAsync(s => s.StateId == stateId);
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(s => s.StateId == stateId);
+
                 if (state == null)
                 {
+                    _logger.LogWarning("State with ID {StateId} not found", stateId);
                     return null;
                 }
-                return new StateResponseDTO
-                {
-                    StateId = state.StateId,
-                    StateName = state.StateName
-                };
+
+                return new StateResponseDTO { StateId = state.StateId, StateName = state.StateName };
             }
             catch (Exception ex)
             {
-                throw new Exception($"An error occurred while retrieving the state: {ex.Message}");
+                _logger.LogError(ex, "Error occurred while retrieving state with ID {StateId}", stateId);
+                throw;
             }
         }
+
         public async Task<bool> DeleteStateAsync(int stateId)
         {
             try
             {
-                var state = await _context.States
-                    .FirstOrDefaultAsync(s => s.StateId == stateId);
+                _logger.LogInformation("Deleting state with ID {StateId}", stateId);
+
+                var state = await _context.States.SingleOrDefaultAsync(s => s.StateId == stateId);
                 if (state == null)
                 {
-                    throw new Exception("State not found.");
+                    _logger.LogWarning("State with ID {StateId} not found", stateId);
+                    throw new KeyNotFoundException("State not found.");
                 }
-                // Check if any candidate is standing in elections from this state
-                var candidatesInState = await _context.Candidates
-                    .AnyAsync(c => c.StateId == stateId);
-                if (candidatesInState)
+
+                if (await _context.Candidates.AnyAsync(c => c.StateId == stateId))
                 {
-                    throw new Exception("Cannot delete state with candidates standing for elections.");
+                    _logger.LogWarning("Cannot delete state {StateId} as candidates exist", stateId);
+                    throw new InvalidOperationException("Cannot delete state with candidates.");
                 }
+
                 _context.States.Remove(state);
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("State with ID {StateId} deleted successfully", stateId);
                 return true;
             }
             catch (Exception ex)
             {
-                throw new Exception($"An error occurred while deleting the state: {ex.Message}");
+                _logger.LogError(ex, "Error occurred while deleting state {StateId}", stateId);
+                throw;
             }
         }
+
         public async Task<StateResponseDTO?> UpdateStateAsync(int stateId, StateRequestDTO stateDto)
         {
             try
             {
-                var state = await _context.States
-                    .FirstOrDefaultAsync(s => s.StateId == stateId);
+                _logger.LogInformation("Updating state {StateId} with new name {StateName}", stateId, stateDto.StateName);
+
+                var state = await _context.States.SingleOrDefaultAsync(s => s.StateId == stateId);
                 if (state == null)
                 {
-                    throw new Exception("State not found.");
+                    _logger.LogWarning("State with ID {StateId} not found", stateId);
+                    throw new KeyNotFoundException("State not found.");
                 }
-                // Check if another state exists with the same name
+
                 var existingState = await _context.States
-                    .FirstOrDefaultAsync(s => s.StateName == stateDto.StateName && s.StateId != stateId);
-                if (existingState != null)
+                    .AnyAsync(s => s.StateName == stateDto.StateName && s.StateId != stateId);
+
+                if (existingState)
                 {
-                    throw new Exception("State with this name already exists.");
+                    _logger.LogWarning("Duplicate state name conflict for {StateName}", stateDto.StateName);
+                    throw new InvalidOperationException("State with this name already exists.");
                 }
+
                 state.StateName = stateDto.StateName;
                 await _context.SaveChangesAsync();
-                return new StateResponseDTO
-                {
-                    StateId = state.StateId,
-                    StateName = state.StateName
-                };
+
+                _logger.LogInformation("State {StateId} updated successfully", stateId);
+
+                return new StateResponseDTO { StateId = state.StateId, StateName = state.StateName };
             }
             catch (Exception ex)
             {
-                throw new Exception($"An error occurred while updating the state: {ex.Message}");
+                _logger.LogError(ex, "Error occurred while updating state {StateId}", stateId);
+                throw;
             }
         }
     }
 }
-    
+
+//using Microsoft.EntityFrameworkCore;
+//using VotingSystem.API.Data;
+//using VotingSystem.API.DTO.State;
+//using VotingSystem.API.Models;
+//using VotingSystem.API.Services.Interface;
+//namespace VotingSystem.API.Services
+//{
+//    public class StateService:IStateService
+//    {
+//        private readonly VotingDbContext _context;
+//        public StateService(VotingDbContext context)
+//        {
+//            _context = context;
+//        }
+//        public async Task<StateResponseDTO> CreateStateAsync(StateRequestDTO stateDto)
+//        {
+//            try
+//            {
+//                // Check if state already exists with the same name
+//                var existingState = await _context.States
+//                    .FirstOrDefaultAsync(s => s.StateName == stateDto.StateName);
+//                if (existingState != null)
+//                {
+//                    throw new Exception("State with this name already exists.");
+//                }
+//                var state = new State
+//                {
+//                    StateName = stateDto.StateName
+//                };
+//                _context.States.Add(state);
+//                await _context.SaveChangesAsync();
+//                return new StateResponseDTO
+//                {
+//                    StateId = state.StateId,
+//                    StateName = state.StateName
+//                };
+//            }
+//            catch (Exception ex)
+//            {
+//                throw new Exception($"An error occurred while creating the state: {ex.Message}");
+//            }
+//        }
+//        public async Task<IEnumerable<StateResponseDTO>> GetAllStatesAsync()
+//        {
+//            try
+//            {
+//                var states = await _context.States.ToListAsync();
+//                return states.Select(s => new StateResponseDTO
+//                {
+//                    StateId = s.StateId,
+//                    StateName = s.StateName
+//                });
+//            }
+//            catch (Exception ex)
+//            {
+//                throw new Exception($"An error occurred while retrieving the states: {ex.Message}");
+//            }
+//        }
+//        public async Task<StateResponseDTO?> GetStateByIdAsync(int stateId)
+//        {
+//            try
+//            {
+//                var state = await _context.States
+//                    .FirstOrDefaultAsync(s => s.StateId == stateId);
+//                if (state == null)
+//                {
+//                    return null;
+//                }
+//                return new StateResponseDTO
+//                {
+//                    StateId = state.StateId,
+//                    StateName = state.StateName
+//                };
+//            }
+//            catch (Exception ex)
+//            {
+//                throw new Exception($"An error occurred while retrieving the state: {ex.Message}");
+//            }
+//        }
+//        public async Task<bool> DeleteStateAsync(int stateId)
+//        {
+//            try
+//            {
+//                var state = await _context.States
+//                    .FirstOrDefaultAsync(s => s.StateId == stateId);
+//                if (state == null)
+//                {
+//                    throw new Exception("State not found.");
+//                }
+//                // Check if any candidate is standing in elections from this state
+//                var candidatesInState = await _context.Candidates
+//                    .AnyAsync(c => c.StateId == stateId);
+//                if (candidatesInState)
+//                {
+//                    throw new Exception("Cannot delete state with candidates standing for elections.");
+//                }
+//                _context.States.Remove(state);
+//                await _context.SaveChangesAsync();
+//                return true;
+//            }
+//            catch (Exception ex)
+//            {
+//                throw new Exception($"An error occurred while deleting the state: {ex.Message}");
+//            }
+//        }
+//        public async Task<StateResponseDTO?> UpdateStateAsync(int stateId, StateRequestDTO stateDto)
+//        {
+//            try
+//            {
+//                var state = await _context.States
+//                    .FirstOrDefaultAsync(s => s.StateId == stateId);
+//                if (state == null)
+//                {
+//                    throw new Exception("State not found.");
+//                }
+//                // Check if another state exists with the same name
+//                var existingState = await _context.States
+//                    .FirstOrDefaultAsync(s => s.StateName == stateDto.StateName && s.StateId != stateId);
+//                if (existingState != null)
+//                {
+//                    throw new Exception("State with this name already exists.");
+//                }
+//                state.StateName = stateDto.StateName;
+//                await _context.SaveChangesAsync();
+//                return new StateResponseDTO
+//                {
+//                    StateId = state.StateId,
+//                    StateName = state.StateName
+//                };
+//            }
+//            catch (Exception ex)
+//            {
+//                throw new Exception($"An error occurred while updating the state: {ex.Message}");
+//            }
+//        }
+//    }
+//}
+

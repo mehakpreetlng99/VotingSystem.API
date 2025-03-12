@@ -1,133 +1,121 @@
-﻿using VotingSystem.API.Data;
+﻿
+using VotingSystem.API.Data;
 using VotingSystem.API.DTO.Candidate;
 using VotingSystem.API.DTO.Vote;
 using VotingSystem.API.Models;
-using VotingSystem.API.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using VotingSystem.API.Services;
 
 public class VoteService : IVoteService
 {
     private readonly VotingDbContext _context;
+    private readonly ILogger<VoteService> _logger;
 
-    public VoteService(VotingDbContext context)
+    public VoteService(VotingDbContext context, ILogger<VoteService> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<bool> CastVoteAsync(VoteRequestDTO voteDto)
     {
-        var voter = await _context.Voters
-            .Where(v => v.VoterCardNumber == voteDto.VoterCardNumber)
-            .FirstOrDefaultAsync();
-
-        if (voter == null)
-            throw new KeyNotFoundException("Voter not found.");
-
-        if (_context.Votes.Any(v => v.VoterId == voter.VoterId))
-            throw new InvalidOperationException("Voter has already cast a vote.");
-
-        if (voteDto.IsAbstained)
+        try
         {
-            // Abstention vote
-            var abstainVote = new Vote
-            {
-                VoterId = voter.VoterId,
-                CandidateId = null,  // No candidate selected
-                StateId = voter.StateId,
-                VoteTime = DateTime.UtcNow
-            };
+            _logger.LogInformation("Attempting to cast vote for voter: {VoterCardNumber}", voteDto.VoterCardNumber);
 
-            _context.Votes.Add(abstainVote);
-        }
-        else
-        {
-            if (voteDto.CandidateId == null)
-                throw new InvalidOperationException("Candidate ID is required unless abstaining.");
-
-            var candidate = await _context.Candidates
-                .Where(c => c.CandidateId == voteDto.CandidateId)
+            var voter = await _context.Voters
+                .Where(v => v.VoterCardNumber == voteDto.VoterCardNumber)
                 .FirstOrDefaultAsync();
 
-            if (candidate == null)
-                throw new KeyNotFoundException("Candidate not found.");
-
-            if (candidate.StateId != voter.StateId)
-                throw new UnauthorizedAccessException("You can only vote for candidates in your own state.");
-
-            var vote = new Vote
+            if (voter == null)
             {
-                VoterId = voter.VoterId,
-                CandidateId = candidate.CandidateId,
-                StateId = voter.StateId,
-                VoteTime = DateTime.UtcNow
-            };
+                _logger.LogWarning("Voter not found: {VoterCardNumber}", voteDto.VoterCardNumber);
+                throw new KeyNotFoundException("Voter not found.");
+            }
+
+            if (_context.Votes.Any(v => v.VoterId == voter.VoterId))
+            {
+                _logger.LogWarning("Voter {VoterCardNumber} has already voted.", voteDto.VoterCardNumber);
+                throw new InvalidOperationException("Voter has already cast a vote.");
+            }
+
+            Vote vote;
+            if (voteDto.IsAbstained)
+            {
+                _logger.LogInformation("Voter {VoterCardNumber} abstained from voting.", voteDto.VoterCardNumber);
+
+                vote = new Vote
+                {
+                    VoterId = voter.VoterId,
+                    CandidateId = null,
+                    StateId = voter.StateId,
+                    VoteTime = DateTime.UtcNow
+                };
+            }
+            else
+            {
+                if (voteDto.CandidateId == null)
+                {
+                    throw new InvalidOperationException("Candidate ID is required unless abstaining.");
+                }
+
+                var candidate = await _context.Candidates
+                    .Where(c => c.CandidateId == voteDto.CandidateId)
+                    .FirstOrDefaultAsync();
+
+                if (candidate == null)
+                {
+                    _logger.LogWarning("Candidate not found: {CandidateId}", voteDto.CandidateId);
+                    throw new KeyNotFoundException("Candidate not found.");
+                }
+
+                if (candidate.StateId != voter.StateId)
+                {
+                    _logger.LogWarning("Voter {VoterCardNumber} attempted to vote outside their state.", voteDto.VoterCardNumber);
+                    throw new UnauthorizedAccessException("You can only vote for candidates in your own state.");
+                }
+
+                vote = new Vote
+                {
+                    VoterId = voter.VoterId,
+                    CandidateId = candidate.CandidateId,
+                    StateId = voter.StateId,
+                    VoteTime = DateTime.UtcNow
+                };
+
+                candidate.VoteCount += 1;
+            }
 
             _context.Votes.Add(vote);
+            await _context.SaveChangesAsync();
 
-            candidate.VoteCount += 1;  // Increment the vote count for the candidate
+            _logger.LogInformation("Vote successfully cast by {VoterCardNumber}", voteDto.VoterCardNumber);
+            return true;
         }
-
-        await _context.SaveChangesAsync();
-        return true;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while casting vote for voter: {VoterCardNumber}", voteDto.VoterCardNumber);
+            throw;
+        }
     }
-
-    //public async Task<bool> CastVoteAsync(VoteRequestDTO voteDto)
-    //{
-    //    try
-    //    {
-    //        var voter = await _context.Voters
-    //            .FirstOrDefaultAsync(v => v.VoterCardNumber == voteDto.VoterCardNumber);
-
-    //        if (voter == null)
-    //            throw new KeyNotFoundException("Voter not found.");
-
-    //        var currentTime = DateTime.UtcNow.TimeOfDay;
-    //        if (currentTime < new TimeSpan(8, 0, 0) || currentTime > new TimeSpan(18, 0, 0))
-    //            throw new InvalidOperationException("Voting is only allowed between 8 AM and 6 PM.");
-
-    //        if (await _context.Votes.AnyAsync(v => v.VoterId == voter.VoterId))
-    //            throw new InvalidOperationException("You have already voted.");
-
-    //        var vote = new Vote
-    //        {
-    //            VoterId = voter.VoterId,
-    //            CandidateId = voteDto.CandidateId,
-    //            StateId = voter.StateId,
-    //            VoteTime = DateTime.UtcNow
-    //        };
-
-    //        _context.Votes.Add(vote);
-
-    //        if (voteDto.CandidateId != null)
-    //        {
-    //            var candidate = await _context.Candidates.FindAsync(voteDto.CandidateId);
-    //            if (candidate == null)
-    //                throw new KeyNotFoundException("Candidate not found.");
-
-    //            if (candidate.StateId != voter.StateId)
-    //                throw new UnauthorizedAccessException("You can only vote for candidates in your own state.");
-
-    //            candidate.VoteCount += 1;
-    //        }
-
-    //        await _context.SaveChangesAsync();
-    //        return true;
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        throw new Exception($"Error while casting vote: {ex.Message}");
-    //    }
-    //}
 
     public async Task<List<CandidateResponseDTO>> GetCandidatesByVoterStateAsync(string voterCardNumber)
     {
         try
         {
-            var voter = await _context.Voters
-                .FirstOrDefaultAsync(v => v.VoterCardNumber == voterCardNumber);
+            _logger.LogInformation("Fetching candidates for voter: {VoterCardNumber}", voterCardNumber);
 
+            var voter = await _context.Voters.FirstOrDefaultAsync(v => v.VoterCardNumber == voterCardNumber);
             if (voter == null)
+            {
+                _logger.LogWarning("Voter not found: {VoterCardNumber}", voterCardNumber);
                 throw new KeyNotFoundException("Voter not found.");
+            }
 
             return await _context.Candidates
                 .Where(c => c.StateId == voter.StateId)
@@ -140,7 +128,8 @@ public class VoteService : IVoteService
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error fetching candidates: {ex.Message}");
+            _logger.LogError(ex, "Error fetching candidates for voter: {VoterCardNumber}", voterCardNumber);
+            throw;
         }
     }
 
@@ -148,11 +137,13 @@ public class VoteService : IVoteService
     {
         try
         {
+            _logger.LogInformation("Fetching total vote count.");
             return await _context.Votes.CountAsync();
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error counting total votes: {ex.Message}");
+            _logger.LogError(ex, "Error counting total votes.");
+            throw;
         }
     }
 
@@ -160,11 +151,135 @@ public class VoteService : IVoteService
     {
         try
         {
+            _logger.LogInformation("Fetching total votes for state {StateId}", stateId);
             return await _context.Votes.CountAsync(v => v.StateId == stateId);
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error counting votes for state {stateId}: {ex.Message}");
+            _logger.LogError(ex, "Error counting votes for state {StateId}", stateId);
+            throw;
         }
     }
 }
+
+//using VotingSystem.API.Data;
+//using VotingSystem.API.DTO.Candidate;
+//using VotingSystem.API.DTO.Vote;
+//using VotingSystem.API.Models;
+//using VotingSystem.API.Services;
+//using Microsoft.EntityFrameworkCore;
+
+//public class VoteService : IVoteService
+//{
+//    private readonly VotingDbContext _context;
+
+//    public VoteService(VotingDbContext context)
+//    {
+//        _context = context;
+//    }
+
+//    public async Task<bool> CastVoteAsync(VoteRequestDTO voteDto)
+//    {
+//        var voter = await _context.Voters
+//            .Where(v => v.VoterCardNumber == voteDto.VoterCardNumber)
+//            .FirstOrDefaultAsync();
+
+//        if (voter == null)
+//            throw new KeyNotFoundException("Voter not found.");
+
+//        if (_context.Votes.Any(v => v.VoterId == voter.VoterId))
+//            throw new InvalidOperationException("Voter has already cast a vote.");
+
+//        if (voteDto.IsAbstained)
+//        { 
+//            var abstainVote = new Vote
+//            {
+//                VoterId = voter.VoterId,
+//                CandidateId = null,  
+//                StateId = voter.StateId,
+//                VoteTime = DateTime.UtcNow
+//            };
+
+//            _context.Votes.Add(abstainVote);
+//        }
+//        else
+//        {
+//            if (voteDto.CandidateId == null)
+//                throw new InvalidOperationException("Candidate ID is required unless abstaining.");
+
+//            var candidate = await _context.Candidates
+//                .Where(c => c.CandidateId == voteDto.CandidateId)
+//                .FirstOrDefaultAsync();
+
+//            if (candidate == null)
+//                throw new KeyNotFoundException("Candidate not found.");
+
+//            if (candidate.StateId != voter.StateId)
+//                throw new UnauthorizedAccessException("You can only vote for candidates in your own state.");
+
+//            var vote = new Vote
+//            {
+//                VoterId = voter.VoterId,
+//                CandidateId = candidate.CandidateId,
+//                StateId = voter.StateId,
+//                VoteTime = DateTime.UtcNow
+//            };
+
+//            _context.Votes.Add(vote);
+
+//            candidate.VoteCount += 1;  
+//        }
+
+//        await _context.SaveChangesAsync();
+//        return true;
+//    }
+
+//    public async Task<List<CandidateResponseDTO>> GetCandidatesByVoterStateAsync(string voterCardNumber)
+//    {
+//        try
+//        {
+//            var voter = await _context.Voters
+//                .FirstOrDefaultAsync(v => v.VoterCardNumber == voterCardNumber);
+
+//            if (voter == null)
+//                throw new KeyNotFoundException("Voter not found.");
+
+//            return await _context.Candidates
+//                .Where(c => c.StateId == voter.StateId)
+//                .Select(c => new CandidateResponseDTO
+//                {
+//                    CandidateId = c.CandidateId,
+//                    CandidateName = c.CandidateName,
+//                    PartyName = _context.Parties.Where(p => p.PartyId == c.PartyId).Select(p => p.PartyName).FirstOrDefault()
+//                }).ToListAsync();
+//        }
+//        catch (Exception ex)
+//        {
+//            throw new Exception($"Error fetching candidates: {ex.Message}");
+//        }
+//    }
+
+//    public async Task<int> GetTotalVotesAsync()
+//    {
+//        try
+//        {
+//            return await _context.Votes.CountAsync();
+//        }
+//        catch (Exception ex)
+//        {
+//            throw new Exception($"Error counting total votes: {ex.Message}");
+//        }
+//    }
+
+//    public async Task<int> GetVotesByStateAsync(int stateId)
+//    {
+//        try
+//        {
+//            return await _context.Votes.CountAsync(v => v.StateId == stateId);
+//        }
+//        catch (Exception ex)
+//        {
+//            throw new Exception($"Error counting votes for state {stateId}: {ex.Message}");
+//        }
+//    }
+//}

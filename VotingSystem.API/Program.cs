@@ -8,6 +8,7 @@ using VotingSystem.API.Services.Interface;
 
 using System.Text;
 using Microsoft.OpenApi.Models;
+using VotingSystem.API.ExceptionMiddleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,11 @@ builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IPartyService, PartyService>();
 builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<IVoteService, VoteService>();
+builder.Services.AddScoped<IStateResultService, StateResultService>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddSingleton<ILoggerService, LoggerService>();
+
+
 
 
 

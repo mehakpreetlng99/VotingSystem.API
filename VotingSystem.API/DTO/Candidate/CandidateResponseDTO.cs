@@ -8,7 +8,7 @@
         public string PartyName { get; set; } = string.Empty; 
         public int StateId { get; set; }
         public string StateName { get; set; } = string.Empty; 
-        public bool IsActive { get; set; }
+        //public bool IsActive { get; set; }
     }
 
 }
